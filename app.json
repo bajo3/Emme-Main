@@ -1,20 +1,38 @@
 {
   "expo": {
-    "name": "turnos-emme",
-    "slug": "turnos-emme",
+    "name": "TurnosBeauty",
+    "slug": "turnos-beauty",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "turnosbeauty",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
+    "plugins": [
+      "expo-router"
+    ],
+
+    "experiments": {
+      "typedRoutes": false
+    },
+
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    },
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -22,6 +40,7 @@
       },
       "edgeToEdgeEnabled": true
     },
+
     "web": {
       "favicon": "./assets/favicon.png"
     }
