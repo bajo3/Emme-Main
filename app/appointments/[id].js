@@ -10,6 +10,7 @@ import {
     ScrollView,
     TouchableOpacity,
     View,
+    Platform,
 } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import Screen from '../../components/ui/Screen'
@@ -170,7 +171,34 @@ export default function AppointmentDetailScreen() {
         }
 
         setAppointment(data)
-        Alert.alert('OK', 'Turno actualizado.')
+
+        // si data trae client_id, usamos eso para volver al cliente
+        const clientId = data?.client_id || appointment?.client_id
+
+        if (Platform.OS === 'web') {
+            // En web, los botones del Alert no ejecutan bien el onPress
+            Alert.alert('OK', 'Turno actualizado.')
+            if (clientId) {
+                router.replace(`/clients/${clientId}`)
+            } else {
+                router.back()
+            }
+        } else {
+            // En Android/iOS mostramos el botón y navegamos al cliente
+            Alert.alert('OK', 'Turno actualizado.', [
+                {
+                    text: 'Volver al cliente',
+                    onPress: () => {
+                        if (clientId) {
+                            router.replace(`/clients/${clientId}`)
+                        } else {
+                            router.back()
+                        }
+                    },
+                },
+            ])
+        }
+
     }
 
     const handleDelete = async () => {

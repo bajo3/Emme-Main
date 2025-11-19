@@ -13,19 +13,33 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: true,
           tabBarActiveTintColor: isDark ? '#FFE082' : '#3F51B5',
-          tabBarInactiveTintColor: '#999',
+          tabBarInactiveTintColor: isDark ? '#B0BEC5' : '#999999',
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: '500',
+          },
           tabBarStyle: {
-            borderTopWidth: 0.5,
-            borderTopColor: '#ddd',
+            height: 64,
+            paddingTop: 6,
+            paddingBottom: 10,
+            borderTopWidth: 0,
+            backgroundColor: isDark ? '#121212' : '#FFFFFF',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 8,
           },
         }}
       >
-        {/* TABS VISIBLES */}
         <Tabs.Screen
           name="index"
           options={{
             title: 'Hoy',
             tabBarLabel: 'Hoy',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="today-outline" size={size} color={color} />
+            ),
           }}
         />
 
@@ -45,51 +59,39 @@ export default function RootLayout() {
           options={{
             title: 'Clientes',
             tabBarLabel: 'Clientes',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="people-outline" size={size} color={color} />
+            ),
           }}
         />
+
         <Tabs.Screen
           name="services/index"
           options={{
             title: 'Servicios',
             tabBarLabel: 'Servicios',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="color-palette-outline" size={size} color={color} />
+            ),
           }}
         />
+
         <Tabs.Screen
           name="reports/index"
           options={{
             title: 'Reportes',
             tabBarLabel: 'Reportes',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="stats-chart-outline" size={size} color={color} />
+            ),
           }}
         />
 
-        {/* RUTAS OCULTAS (siguen existiendo, pero no aparecen como tab) */}
-        <Tabs.Screen
-          name="clients/new"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="clients/[id]"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="services/new"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="services/[id]"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="appointments/new"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="appointments/[id]"
-          options={{ href: null }}
-        />
         <Tabs.Screen
           name="settings/index"
-          options={{ href: null }}
+          options={{
+            tabBarButton: () => null, // ruta oculta
+          }}
         />
       </Tabs>
     </SafeAreaProvider>
