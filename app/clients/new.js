@@ -6,6 +6,7 @@ import {
   Button,
   StyleSheet,
   Alert,
+  Platform,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import Screen from '../../components/ui/Screen'
@@ -45,12 +46,18 @@ export default function NewClientScreen() {
       return
     }
 
-    Alert.alert('OK', 'Cliente creado.', [
-      {
-        text: 'Volver a la lista',
-        onPress: () => router.back(),
-      },
-    ])
+    // ✅ Comportamiento distinto para web vs nativo
+    if (Platform.OS === 'web') {
+      Alert.alert('OK', 'Cliente creado.')
+      router.replace('/clients')
+    } else {
+      Alert.alert('OK', 'Cliente creado.', [
+        {
+          text: 'Volver a la lista',
+          onPress: () => router.replace('/clients'),
+        },
+      ])
+    }
   }
 
   return (
@@ -100,7 +107,11 @@ export default function NewClientScreen() {
 
         <Spacer size={16} />
 
-        <Button title={saving ? 'Guardando...' : 'Guardar cliente'} onPress={handleSave} />
+        <Button
+          title={saving ? 'Guardando...' : 'Guardar cliente'}
+          onPress={handleSave}
+          disabled={saving}
+        />
       </Card>
     </Screen>
   )

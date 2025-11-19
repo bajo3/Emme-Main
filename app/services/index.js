@@ -1,5 +1,5 @@
 // app/services/index.js
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   Text,
   Button,
@@ -60,12 +60,22 @@ export default function ServicesScreen() {
         {item.category ? (
           <Text style={styles.category}>{item.category}</Text>
         ) : null}
+        {item.duration_min != null ? (
+          <Text style={styles.duration}>{item.duration_min} min</Text>
+        ) : null}
         <Spacer size={4} />
         <Text style={styles.price}>
-          {item.price != null ? `$ ${Number(item.price).toLocaleString('es-AR')}` : 'Sin precio'}
+          {item.price != null
+            ? `$ ${Number(item.price).toLocaleString('es-AR')}`
+            : 'Sin precio'}
         </Text>
         <Spacer size={4} />
-        <Text style={[styles.status, { color: item.is_active ? '#2E7D32' : '#B0BEC5' }]}>
+        <Text
+          style={[
+            styles.status,
+            { color: item.is_active ? '#2E7D32' : '#B0BEC5' },
+          ]}
+        >
           {item.is_active ? 'Activo' : 'Inactivo'}
         </Text>
       </Card>
@@ -92,7 +102,11 @@ export default function ServicesScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3F51B5" />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#3F51B5"
+            />
           }
         />
       )}
@@ -109,6 +123,10 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 13,
     color: '#757575',
+  },
+  duration: {
+    fontSize: 13,
+    color: '#455A64',
   },
   price: {
     fontSize: 14,

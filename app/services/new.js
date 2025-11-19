@@ -21,6 +21,7 @@ export default function NewServiceScreen() {
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
   const [price, setPrice] = useState('')
+  const [durationMin, setDurationMin] = useState('')
   const [color, setColor] = useState('#8E44AD')
   const [isActive, setIsActive] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -37,6 +38,16 @@ export default function NewServiceScreen() {
       return
     }
 
+    const parsedDuration =
+      durationMin.trim() !== '' ? Number(durationMin.replace(',', '.')) : null
+    if (durationMin && Number.isNaN(parsedDuration)) {
+      Alert.alert(
+        'Duración inválida',
+        'Ingresá un número válido para la duración en minutos.'
+      )
+      return
+    }
+
     setSaving(true)
 
     const { error } = await supabase.from('services').insert({
@@ -45,6 +56,7 @@ export default function NewServiceScreen() {
       price: parsedPrice,
       color: color || null,
       is_active: isActive,
+      duration_min: parsedDuration,
     })
 
     setSaving(false)
@@ -87,6 +99,17 @@ export default function NewServiceScreen() {
 
         <Spacer size={8} />
 
+        <Text style={styles.label}>Duración (min, opcional)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ej: 60"
+          keyboardType="numeric"
+          value={durationMin}
+          onChangeText={setDurationMin}
+        />
+
+        <Spacer size={8} />
+
         <Text style={styles.label}>Precio (opcional)</Text>
         <TextInput
           style={styles.input}
@@ -115,7 +138,10 @@ export default function NewServiceScreen() {
 
         <Spacer size={16} />
 
-        <Button title={saving ? 'Guardando...' : 'Guardar servicio'} onPress={handleSave} />
+        <Button
+          title={saving ? 'Guardando...' : 'Guardar servicio'}
+          onPress={handleSave}
+        />
       </Card>
     </Screen>
   )

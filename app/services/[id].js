@@ -5,6 +5,7 @@ import Screen from '../../components/ui/Screen'
 import SectionTitle from '../../components/ui/SectionTitle'
 import { useLocalSearchParams } from 'expo-router'
 
+
 export default function ServiceDetailScreen() {
   const { id } = useLocalSearchParams()
 

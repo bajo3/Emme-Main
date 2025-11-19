@@ -2,11 +2,10 @@
 import { Tabs } from 'expo-router'
 import { useColorScheme } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme()
-
-  const isDark = colorScheme === 'dark'
+  const isDark = useColorScheme() === 'dark'
 
   return (
     <SafeAreaProvider>
@@ -21,20 +20,26 @@ export default function RootLayout() {
           },
         }}
       >
+        {/* TABS VISIBLES */}
         <Tabs.Screen
           name="index"
           options={{
             title: 'Hoy',
-            tabBarLabel: 'Agenda',
+            tabBarLabel: 'Hoy',
           }}
         />
+
         <Tabs.Screen
           name="agenda/index"
           options={{
             title: 'Agenda',
-            tabBarLabel: 'Calendario',
+            tabBarLabel: 'Agenda',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="calendar-outline" size={size} color={color} />
+            ),
           }}
         />
+
         <Tabs.Screen
           name="clients/index"
           options={{
@@ -55,6 +60,36 @@ export default function RootLayout() {
             title: 'Reportes',
             tabBarLabel: 'Reportes',
           }}
+        />
+
+        {/* RUTAS OCULTAS (siguen existiendo, pero no aparecen como tab) */}
+        <Tabs.Screen
+          name="clients/new"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="clients/[id]"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="services/new"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="services/[id]"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="appointments/new"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="appointments/[id]"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="settings/index"
+          options={{ href: null }}
         />
       </Tabs>
     </SafeAreaProvider>

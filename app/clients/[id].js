@@ -1,5 +1,5 @@
 // app/clients/[id].js
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import {
     Text,
     StyleSheet,
@@ -9,13 +9,47 @@ import {
     Alert,
     TextInput,
     View,
+    FlatList,
+    TouchableOpacity,
+    Platform,
 } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router'
 import Screen from '../../components/ui/Screen'
 import SectionTitle from '../../components/ui/SectionTitle'
 import Spacer from '../../components/ui/Spacer'
 import Card from '../../components/ui/Card'
 import { supabase } from '../../lib/supabase'
+
+function formatTime(t) {
+    if (!t) return ''
+    return t.slice(0, 5)
+}
+
+function getStatusLabel(status) {
+    switch (status) {
+        case 'confirmed':
+            return 'Confirmado'
+        case 'done':
+            return 'Realizado'
+        case 'cancelled':
+            return 'Cancelado'
+        default:
+            return 'Pendiente'
+    }
+}
+
+function getStatusColor(status) {
+    switch (status) {
+        case 'confirmed':
+            return '#0277BD'
+        case 'done':
+            return '#2E7D32'
+        case 'cancelled':
+            return '#E53935'
+        default:
+            return '#FF8F00'
+    }
+}
 
 export default function ClientDetailScreen() {
     const { id } = useLocalSearchParams()
@@ -32,11 +66,12 @@ export default function ClientDetailScreen() {
     const [instagram, setInstagram] = useState('')
     const [notes, setNotes] = useState('')
 
+    const [appointments, setAppointments] = useState([])
+    const [loadingAppointments, setLoadingAppointments] = useState(false)
+
     // Cargar cliente
     useEffect(() => {
         const loadClient = async () => {
-            console.log('CARGANDO CLIENTE CON id (param):', id)
-
             const { data, error } = await supabase
                 .from('clients')
                 .select('*')
@@ -46,7 +81,6 @@ export default function ClientDetailScreen() {
             if (error) {
                 console.error('Error al cargar cliente', error)
             } else {
-                console.log('CLIENTE CARGADO →', data)
                 setClient(data)
                 setName(data.name || '')
                 setPhone(data.phone || '')
@@ -59,6 +93,32 @@ export default function ClientDetailScreen() {
 
         if (id) loadClient()
     }, [id])
+
+    const loadAppointments = useCallback(async () => {
+        if (!id) return
+        setLoadingAppointments(true)
+
+        const { data, error } = await supabase
+            .from('appointments')
+            .select('id, date, start_time, end_time, status, service_name')
+            .eq('client_id', id)
+            .order('date', { ascending: false })
+            .order('start_time', { ascending: true })
+
+        if (error) {
+            console.error('Error cargando turnos del cliente', error)
+        } else {
+            setAppointments(data || [])
+        }
+
+        setLoadingAppointments(false)
+    }, [id])
+
+    useFocusEffect(
+        useCallback(() => {
+            loadAppointments()
+        }, [loadAppointments])
+    )
 
     const handleWhatsApp = () => {
         if (!client?.phone) {
@@ -116,6 +176,12 @@ export default function ClientDetailScreen() {
 
     // Confirmación visual
     const confirmDelete = () => {
+        // En web, Alert ignora los botones, así que borramos directo
+        if (Platform.OS === 'web') {
+            handleDelete()
+            return
+        }
+
         Alert.alert(
             'Eliminar cliente',
             '¿Seguro que querés eliminar este cliente? Esta acción no se puede deshacer.',
@@ -130,33 +196,24 @@ export default function ClientDetailScreen() {
     const handleDelete = async () => {
         if (!client) return
 
-        console.log('BORRANDO CLIENTE →', client.id)
-
         setDeleting(true)
 
         // 1) Borrar turnos de este cliente
-        const { data: deletedAppointments, error: errorAppointments } = await supabase
+        const { error: errorAppointments } = await supabase
             .from('appointments')
             .delete()
             .eq('client_id', client.id)
-            .select()
-
-        console.log('DELETE appointments RESULT →', { deletedAppointments, errorAppointments })
 
         if (errorAppointments) {
             console.error('Error al eliminar turnos del cliente', errorAppointments)
-            // No frenamos acá: igual intentamos borrar el cliente
+            // No frenamos acá
         }
 
         // 2) Borrar cliente
-        const { data: deletedClient, error: errorClient } = await supabase
+        const { error: errorClient } = await supabase
             .from('clients')
             .delete()
             .eq('id', client.id)
-            .select()
-            .single()
-
-        console.log('DELETE clients RESULT →', { deletedClient, errorClient })
 
         setDeleting(false)
 
@@ -166,14 +223,65 @@ export default function ClientDetailScreen() {
             return
         }
 
-        Alert.alert('OK', 'Cliente eliminado.', [
-            {
-                text: 'Aceptar',
-                onPress: () => router.back(),
-            },
-        ])
+        if (Platform.OS === 'web') {
+            // En web, los botones del Alert no tienen onPress
+            Alert.alert('OK', 'Cliente eliminado.')
+            router.replace('/clients')
+        } else {
+            Alert.alert('OK', 'Cliente eliminado.', [
+                {
+                    text: 'Aceptar',
+                    onPress: () => router.replace('/clients'),
+                },
+            ])
+        }
+
+
     }
 
+    const handleNewAppointment = () => {
+        if (!client) return
+        router.push({
+            pathname: '/appointments/new',
+            params: { clientId: client.id },
+        })
+    }
+
+    const renderAppointment = ({ item }) => (
+        <TouchableOpacity
+            onPress={() =>
+                router.push({
+                    pathname: `/appointments/${item.id}`,
+                })
+            }
+            style={{ marginBottom: 8 }}
+        >
+            <Card>
+                <Text style={styles.apptDate}>{item.date}</Text>
+                <Text style={styles.apptTime}>
+                    {formatTime(item.start_time)}
+                    {item.end_time ? ` - ${formatTime(item.end_time)}` : ''}
+                </Text>
+                <Spacer size={4} />
+                <Text style={styles.apptService}>
+                    {item.service_name || 'Sin servicio'}
+                </Text>
+                <Spacer size={4} />
+                <View style={styles.apptStatusRow}>
+                    <View
+                        style={[
+                            styles.apptStatusBadge,
+                            { backgroundColor: getStatusColor(item.status) },
+                        ]}
+                    >
+                        <Text style={styles.apptStatusText}>
+                            {getStatusLabel(item.status)}
+                        </Text>
+                    </View>
+                </View>
+            </Card>
+        </TouchableOpacity>
+    )
 
     if (loading) {
         return (
@@ -238,7 +346,9 @@ export default function ClientDetailScreen() {
                         autoCapitalize="none"
                     />
                 ) : (
-                    <Text style={styles.value}>{client.instagram ? `@${client.instagram}` : '-'}</Text>
+                    <Text style={styles.value}>
+                        {client.instagram ? `@${client.instagram}` : '-'}
+                    </Text>
                 )}
 
                 <Spacer size={8} />
@@ -284,6 +394,8 @@ export default function ClientDetailScreen() {
                         <Button title="Editar datos" onPress={() => setIsEditing(true)} />
                         <Spacer size={8} />
                         <Button title="Abrir WhatsApp" onPress={handleWhatsApp} />
+                        <Spacer size={8} />
+                        <Button title="Nuevo turno" onPress={handleNewAppointment} />
                     </>
                 )}
             </Card>
@@ -295,17 +407,32 @@ export default function ClientDetailScreen() {
                 <Button
                     title={deleting ? 'Eliminando...' : 'Eliminar cliente'}
                     color="#E53935"
-                    onPress={handleDelete}
+                    onPress={confirmDelete}
                 />
             </View>
 
-
-
             <Spacer size={24} />
 
-            {/* Placeholder para historial de turnos */}
+            {/* Historial de turnos */}
             <SectionTitle>Historial de turnos</SectionTitle>
-            <Text>(Más adelante acá listamos los turnos de este cliente)</Text>
+
+            {loadingAppointments ? (
+                <>
+                    <ActivityIndicator />
+                    <Spacer size={8} />
+                    <Text>Cargando turnos...</Text>
+                </>
+            ) : appointments.length === 0 ? (
+                <Text style={styles.emptyAppointments}>
+                    Este cliente todavía no tiene turnos.
+                </Text>
+            ) : (
+                <FlatList
+                    data={appointments}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderAppointment}
+                />
+            )}
         </Screen>
     )
 }
@@ -334,5 +461,36 @@ const styles = StyleSheet.create({
     textarea: {
         height: 80,
         textAlignVertical: 'top',
+    },
+    emptyAppointments: {
+        fontSize: 13,
+        color: '#757575',
+    },
+    apptDate: {
+        fontSize: 13,
+        color: '#757575',
+    },
+    apptTime: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#212121',
+    },
+    apptService: {
+        fontSize: 13,
+        color: '#424242',
+    },
+    apptStatusRow: {
+        flexDirection: 'row',
+        marginTop: 4,
+    },
+    apptStatusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+    },
+    apptStatusText: {
+        fontSize: 11,
+        color: '#FFFFFF',
+        fontWeight: '600',
     },
 })
